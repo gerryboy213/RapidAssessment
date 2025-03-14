@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin_dashboard.css') }}">
+</head>
+<body>
+
+    <!-- Preloader -->
+    <div class="preloader">
+        <div class="cssload-speeding-wheel"></div>
+    </div>
+
+    <!-- Wrapper -->
+    <div id="wrapper">
+
+        <!-- Navigation Bar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
+            <div class="container-fluid">
+
+                <!-- Sidebar Toggle Button -->
+                <button class="btn btn-primary me-2 d-lg-none" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+
+                <a class="navbar-brand fw-bold" href="#">Admin Panel</a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <div class="ms-auto d-flex align-items-center">
+
+                        <!-- Search Bar -->
+                        <form class="d-none d-md-flex me-3">
+                            <input class="form-control me-2" type="search" placeholder="Search..." aria-label="Search">
+                            <button class="btn btn-outline-primary" type="submit"><i class="fa fa-search"></i></button>
+                        </form>
+
+                        <!-- Profile -->
+                        <a class="nav-link profile-pic d-flex align-items-center" href="#">
+                            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="user-img" width="36" class="rounded-circle me-2">
+                            <b class="d-none d-sm-inline">Steave</b>
+                        </a>
+
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <h2>Admin Menu</h2>
+            <a href="#">Dashboard</a>
+            <a href="#">Profile</a>
+            <a href="#">Manage Users</a>
+            <a href="#">Questions</a>
+            <a href="#">Results</a>
+            <a href="{{ url_for('admin_logout') }}" class="logout">Logout</a>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <h1 class="fw-bold">Dashboard</h1>
+
+            <!-- Dashboard Cards -->
+            <div class="dashboard-cards">
+                <div class="card">
+                    <h3>New Users</h3>
+                    <p>23</p>
+                </div>
+                <div class="card">
+                    <h3>New Projects</h3>
+                    <p>169</p>
+                </div>
+                <div class="card">
+                    <h3>New Invoices</h3>
+                    <p>157</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Preloader, Sidebar Toggle, and Bootstrap -->
+    <script>
+        window.onload = function () {
+            document.querySelector(".preloader").style.display = "none";
+        };
+
+        // Sidebar Toggle
+        document.getElementById('sidebarToggle').addEventListener('click', function () {
+            document.getElementById('sidebar').classList.toggle('active');
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
