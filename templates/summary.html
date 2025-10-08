@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summary</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='summary.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+</head>
+<body>
+
+    <div class="container">
+        <form method="POST">
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th colspan="2" class="summary-title">Summary</th>
+                    </tr>
+                    <tr>
+                        <th>Question</th>
+                        <th>Answer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for id, data in questions_with_answers.items() %}
+                    <tr>
+                        <td>{{ data.question }}</td>
+                        <td>
+                            {% if data.answer == 'Yes' %}
+                              <i class="fas fa-check-circle" style="color: green;"></i>     Yes
+                            {% elif data.answer == 'No' %}
+                              <i class="fas fa-times-circle" style="color: red;"></i>  No
+                            {% else %}
+                              {{ data.answer }}
+                            {% endif %}
+                          </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+
+            <div class="button-container">
+                <button type="submit" class="button confirm">Confirm & Submit</button>
+            </div>
+        </form>
+    </div>
+    
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Information</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+
+</head>
+<body>
+    <div class="container">
+        
+        <h2>Personal Information</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+        <form method="POST" action="{{ url_for('assessmentss') }}">
+            
+            <div class="input-group">
+                <label for="first_name">First Name</label>
+                <input type="text" id="first_name" name="first_name" placeholder="Enter your first name" required>
+            </div>
+        
+            <div class="input-group">
+                <label for="middle_initial">Middle Initial</label>
+                <input type="text" id="middle_initial" name="middle_initial" placeholder="Enter your middle initial">
+            </div>
+        
+            <div class="input-group">
+                <label for="last_name">Last Name</label>
+                <input type="text" id="last_name" name="last_name" placeholder="Enter your last name" required>
+            </div>
+            
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="contact">Contact Number</label>
+                    <input type="tel" id="contact" name="contact" required pattern="[0-9]{11}" placeholder="Enter your contact number">
+                </div>
+            <div class="input-group">
+                <label for="dob">Date of Birth</label>
+                <input type="date" id="dob" name="dob" required onchange="calculateAge()">
+            </div>
+        
+            <div class="input-group">
+                <label for="age">Age</label>
+                <input type="number" id="age" name="age" placeholder="Calculated automatically" readonly>
+            </div>
+        
+            <div class="input-group">
+                <label for="sex">Sex</label>
+                <select id="sex" name="sex" required>
+                    <option value="" disabled selected>Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                </select>
+            </div>
+            </div>
+        
+            <h2>Select your Address</h2>
+            <div class="address-row">
+                <div class="input-group">
+                    <label class="form-label">Region *</label>
+                    <select name="region" class="form-control form-control-md" id="region"></select>
+                </div>
+                <div class="input-group">
+                    <label class="form-label">Province *</label>
+                    <select name="province" class="form-control form-control-md" id="province"></select>
+                </div>
+                <div class="input-group">
+                    <label class="form-label">City / Municipality *</label>
+                    <select name="city" class="form-control form-control-md" id="city"></select>
+                </div>
+                <div class="input-group">
+                    <label class="form-label">Barangay *</label>
+                    <select name="barangay" class="form-control form-control-md" id="barangay"></select>
+                </div>
+                <div class="input-group">
+                    <label for="street-text" class="form-label">Street/Sitio/Purok (Optional)</label>
+                    <input type="text" class="form-control form-control-md" name="street" id="street">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="date">Date of Visit</label>
+                <input type="date" id="date" name="date" required>
+            </div>
+        
+            <div class="input-group">
+                <label for="location">Ang checklist ay sinagutan sa:</label>
+                <select id="location" name="location" required>
+                    <option value="" disabled selected>Pumili ng lokasyon</option>
+                    <option value="BHS Union AFHF">BHS Union AFHF</option>
+                    <option value="RHU Mayorga">RHU Mayorga </option>
+                    <option value="Gandara AFHF">Gandara AFHF </option>
+                    <option value="RHU Gandara">RHU Gandara </option>
+
+                    <option value="RHU Pagsanghan">RHU Pagsanghan </option>
+                    <option value="Abuyog DH AFHF">Abuyog District Hospital AFHF</option>
+                    <option value="Gandara DH AFHF">Gandara District Hospital AFHF</option>
+
+                </select>
+            </div>
+        
+            <button type="submit">Next →</button>
+        </form>
+        
+             
+
+
+        <script>
+        function calculateAge() {
+            let dob = document.getElementById("dob").value;
+            if (dob) {
+                let birthDate = new Date(dob);
+                let today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                let monthDiff = today.getMonth() - birthDate.getMonth();
+                let dayDiff = today.getDate() - birthDate.getDate();
+                
+                // Adjust age if birthday has not occurred yet this year
+                if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+                    age--;
+                }
+        
+                document.getElementById("age").value = age;
+            }
+        }
+        </script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+        <script>
+            const regionUrl = "{{ url_for('static', filename='ph-json/region.json') }}";
+            const barangayUrl = "{{ url_for('static', filename='ph-json/barangay.json') }}";
+            const provinceUrl = "{{ url_for('static', filename='ph-json/province.json') }}";
+            const cityUrl = "{{ url_for('static', filename='ph-json/city.json') }}";
+
+        </script>
+
+        <script src="{{ url_for('static', filename='js/ph-address-selector.js') }}"></script>
+     
+</body>
+</html>
+
