@@ -22,8 +22,28 @@
         <form method="POST" action="{{ url_for('admin_signup') }}">
             <input type="text" name="new_username" placeholder="New Username" required>
             <input type="password" name="new_password" placeholder="New Password" required>
+        
+            <select name="region" required>
+                <option value="" disabled selected>Select Region</option>
+                <option value="01">Region I (Ilocos Region)</option>
+                <option value="02">Region II (Cagayan Valley)</option>
+                <option value="03">Region III (Central Luzon)</option>
+                <!-- Add more region options as needed -->
+            </select>
+        
+            <select name="province" required>
+                <option value="" disabled selected>Select Province</option>
+                <!-- Populate with JS or manually add options -->
+            </select>
+        
+            <select name="city" required>
+                <option value="" disabled selected>Select Municipality</option>
+                <!-- Populate with JS or manually add options -->
+            </select>
+        
             <button type="submit">Sign Up</button>
         </form>
+        
 
         <p>Already have an account? <a href="{{ url_for('admin_login') }}">Login here</a></p>
 

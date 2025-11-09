@@ -27,10 +27,10 @@ html, body {
     flex-wrap: wrap;
 }
 .logo {
-    width: 20vh; /* Adjust size as needed */
+    width: 15vh; /* Adjust size as needed */
     max-width: 80px;
     height: auto;
-    margin-bottom: 10px;
+   
 }
 
 .logo.large{
@@ -51,18 +51,18 @@ html, body {
 .logolarger {
     width: 350px; /* Special size for the last image */
     height:60px;
-    margin-top: 6px;
+
 
 }
 
 /* Container */
 .container {
     background: white;
-    padding: 40px;
+    padding: 30px;
     border-radius: 12px;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
     width: 40vw;
-    max-width: 450px; /* Prevents excessive stretching */
+    max-width: 400px; /* Prevents excessive stretching */
     min-width: 280px;
     transition: transform 0.3s ease-in-out;
     margin-top: 10px;
@@ -107,7 +107,7 @@ p {
 }
 
 .btn {
-    background: #4CAF50;
+    background: #45B383;
     color: white;
     text-decoration: none;
     padding: 12px;

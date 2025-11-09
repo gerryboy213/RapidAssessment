@@ -13,7 +13,7 @@ html, body {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    background-color: #f8b8b8;/* Softer background */
+    background: #ffffffe3;    
     padding: 20px;
 }
 
@@ -27,6 +27,8 @@ body {
     max-width: 800px;
     text-align: center;
     animation: fadeIn 0.5s ease-in-out;
+    border: 2px solid #6d2828;
+    border-radius: 10px;
 }
 
 /* Heading */
@@ -52,6 +54,7 @@ h2 {
     box-shadow: 0px 5px 50px rgba(0, 0, 0, 0.1);
     background-color: white;
     margin-bottom: 10px;
+
 }
 
 .summary-table th, .summary-table td {
@@ -92,7 +95,7 @@ h2 {
 .button-container {
     text-align: center; /* Center the button */
     margin-top: -17px; /* Add space above the button */
-    margin-bottom: 20px;
+    margin-bottom: 0px;
 }
 
 .button.confirm {

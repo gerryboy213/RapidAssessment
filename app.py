@@ -2,10 +2,15 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_sqlalchemy import SQLAlchemy 
 from sqlalchemy import text 
 from werkzeug.security import generate_password_hash, check_password_hash
+
 from flask_cors import CORS
+from flask import current_app
+import os, json
 import uuid
 import mysql.connector
 from datetime import datetime
+from sqlalchemy import func
+
 
 
 app = Flask(__name__)
@@ -16,15 +21,26 @@ app.secret_key = 'your_secret_key'
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_DB'] = 'form_db'
+app.config['MYSQL_DB'] = 'heeadsss_db'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'  # Add this to fetch results as dictionaries
 
 # Database Configuration (Update your MySQL credentials)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root@localhost/form_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/form_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 
+
+# Folder to save uploaded signatures
+# UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static/uploads')
+# os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# # Allowed extensions (optional but recommended)
+# ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+# def allowed_file(filename):
+#     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def get_questions():
@@ -44,8 +60,8 @@ def notify_admin_new_submission(user_id):
 
 # Define User Model
 class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    control_num = db.Column(db.String(20), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    control_num = db.Column(db.String(255), nullable=False)
     first_name = db.Column(db.String(100), nullable=False)
     middle_initial = db.Column(db.String(5), nullable=True)
     last_name = db.Column(db.String(100), nullable=False)
@@ -61,7 +77,15 @@ class User(db.Model):
 
     location = db.Column(db.Text, nullable=False)
     date = db.Column(db.Date, nullable=False)
+    
+    visible_to_rhu = db.Column(db.Boolean, default=True)  # <-- ADD THIS LINE
+    visible_to_brgy = db.Column(db.Boolean, default=True)  # <-- ADD THIS LINE
+    visible_to_hospital = db.Column(db.Boolean, default=True)  # <-- ADD THIS LINE
     submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    __table_args__ = (
+        db.UniqueConstraint('first_name', 'last_name', 'dob', 'contact', name='unique_user_identity'),
+    )
     
 class Questions(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -78,7 +102,39 @@ class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
+    region = db.Column(db.String(100), nullable=False)
+    province = db.Column(db.String(100), nullable=False)
+    city = db.Column(db.String(100), nullable=False)
+
+class Services(db.Model):
+    __tablename__ = 'services'
     
+    id = db.Column(db.Integer, primary_key=True)
+    service_name = db.Column(db.String(255), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    services_saved = db.Column(db.Boolean, default=False)
+    source = db.Column(db.String(50), nullable=False, default='brgy')
+
+    
+    user_id = db.Column(db.Integer, nullable=False)  # Link to the user
+
+class Recommendations(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    recommendation_text = db.Column(db.String(255), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, nullable=False)
+    recommendation_saved = db.Column(db.Boolean, default=False)  # ✅ Add this
+    source = db.Column(db.String(50), nullable=False, default='brgy')
+
+
+class Signature(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    filename = db.Column(db.String(255), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -209,7 +265,10 @@ def admin_logout():
     return redirect(url_for('admin'))
 
 # Route for Form Submission
-@app.route('/assessment', methods=['GET', 'POST'])
+from sqlalchemy import and_
+from sqlalchemy.exc import IntegrityError
+
+@app.route('/personal-information', methods=['GET', 'POST'])
 def assessmentss():
     if request.method == 'POST':
         try:
@@ -217,7 +276,7 @@ def assessmentss():
             middle_initial = request.form['middle_initial']
             last_name = request.form['last_name']
             dob = request.form['dob']
-            contact=request.form['contact']
+            contact = request.form['contact']
             sex = request.form['sex']
             region = request.form['region']
             province_name = request.form['province']
@@ -227,7 +286,27 @@ def assessmentss():
             location = request.form['location']
             date = request.form['date']
 
-            # Calculate age from date of birth
+            # Check if the user already exists (based on full name and dob)
+            existing_user = User.query.filter(
+                and_(
+                    User.first_name.ilike(first_name),
+                    User.last_name.ilike(last_name),
+                    User.dob == dob,
+                    User.contact == contact,
+                    User.region.ilike(region),
+                    User.province.ilike(province_name),
+                    User.city.ilike(city),
+                    User.barangay.ilike(barangay),
+                    User.street.ilike(street),
+                    User.location.ilike(location)
+                )
+            ).first()
+
+            if existing_user:
+                flash('A record with this information already exists. Please check your details or ask help from your health service provider.', 'warning')
+                return redirect(url_for('assessmentss'))
+
+            # Calculate age
             birth_date = datetime.strptime(dob, '%Y-%m-%d')
             today = datetime.today()
             age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
@@ -251,16 +330,22 @@ def assessmentss():
 
             db.session.add(new_user)
             db.session.commit()
-            print("✅ Data saved successfully!")  # Debugging line
-            
-            session['user_id'] = new_user.id
+            print("✅ Data saved successfully!")
 
-            return redirect(url_for('questions'))  # Redirect after saving
+            session['user_id'] = new_user.id
+            return redirect(url_for('questions'))
+
+        except IntegrityError:
+            db.session.rollback()
+            flash('This user already exists (duplicate submission).', 'warning')
+            return redirect(url_for('assessmentss'))
 
         except Exception as e:
-            print(f"❌ Error inserting data: {e}")  # Debugging line
+            print(f"❌ Error inserting data: {e}")
+            flash('An unexpected error occurred while saving your data.', 'danger')
 
-    return render_template("assessment.html")
+    return render_template("personal_information.html")
+
 
 @app.route('/assessment', methods=['POST'])
 def assessment():
@@ -290,6 +375,7 @@ def assessment():
             street=data.get('street', ''),
             location=data.get('location', ''),
             date=data.get('date', '')
+            
         )
 
         db.session.add(new_user)
@@ -325,6 +411,7 @@ def submit():
         location = data['location']
         date = data['date']
         
+       
         # Create a connection to the MySQL database
         connection = mysql.connector.connect(
             host=app.config['MYSQL_HOST'],
@@ -332,7 +419,18 @@ def submit():
             password=app.config['MYSQL_PASSWORD'],
             database=app.config['MYSQL_DB']
         )
-        cursor = connection.cursor()
+        cursor = connection.cursor(dictionary=True)
+
+        # ✅ ADDED: Check for duplicate entry
+        check_sql = """
+        SELECT * FROM user
+        WHERE first_name = %s AND middle_initial = %s AND last_name = %s AND dob = %s
+        """
+        cursor.execute(check_sql, (first_name, middle_initial, last_name, dob))
+        if cursor.fetchone():
+            cursor.close()
+            connection.close()
+            return jsonify({"error": "The client is already existing"}), 409  # 409 Conflict
 
         # Insert data into the MySQL database
         sql = """
@@ -342,7 +440,7 @@ def submit():
         values = (first_name, middle_initial, last_name, dob, age, contact, sex, region, province, city, barangay, street, location, date)
         cursor.execute(sql, values)
         connection.commit()
-        
+       
         user_id = cursor.lastrowid  # Get the ID of the last inserted row
 
         cursor.close()
@@ -407,71 +505,157 @@ def save_answer():
 @app.route('/update_control_number', methods=['POST'])
 def update_control_number():
     try:
-        data = request.json  # Get JSON data
+        data = request.get_json()
         user_id = data.get("user_id")
-        
 
         if not user_id:
             return jsonify({"success": False, "error": "Missing user_id"}), 400
 
-        # Generate control_num
-        current_time = datetime.now().strftime("%Y%m%d%H%M%S")  # YYYYMMDDHHMMSS
-        random_num = random.randint(10, 99)  # Two-digit random number
-        control_num = f"CN-{user_id}-{current_time}{random_num}"
+        # Lock the user row for update to prevent race conditions
+        user = db.session.query(User).filter_by(id=user_id).with_for_update().first()
+        if not user:
+            return jsonify({"success": False, "error": "User not found"}), 404
 
-        # Connect to MySQL
-        connection = mysql.connector.connect(
-            host=app.config["MYSQL_HOST"],
-            user=app.config["MYSQL_USER"],
-            password=app.config["MYSQL_PASSWORD"],
-            database=app.config["MYSQL_DB"]
-        )
-        cursor = connection.cursor()
+        # Center mappings
+        center_codes = {
+            "BHS Union AFHF": ("0837", "01"),
+            "RHU Mayorga": ("0837", "02"),
+            "Gandara AFHF": ("0860", "02"),
+            "RHU Gandara": ("0860", "03"),
+            "RHU Pagsanghan": ("0860", "04"),
+            "Abuyog DH AFHF": ("0837", "04"),
+            "Gandara DH AFHF": ("0860", "05")
+        }
 
-        # Update the user table with the control number
-        sql = "UPDATE user SET control_num = %s WHERE id = %s"
-        cursor.execute(sql, (control_num, user_id))
-        connection.commit()
+        center_source_map = {
+            "BHS Union AFHF": "brgy",
+            "RHU Mayorga": "rhu",
+            "Gandara AFHF": "hospital",
+            "RHU Gandara": "rhu",
+            "RHU Pagsanghan": "rhu",
+            "Abuyog DH AFHF": "hospital",
+            "Gandara DH AFHF": "hospital"
+        }
 
-        cursor.close()
-        connection.close()
+        center_name = user.location
+        center_info = center_codes.get(center_name)
+        center_source = center_source_map.get(center_name)
 
-        return jsonify({"success": True, "control_num": control_num}), 200
+        if not center_info or not center_source:
+            return jsonify({"success": False, "error": f"No codes/source for center: {center_name}"}), 400
 
+        province_code, city_code = center_info
+
+        # Only generate if not already set
+        if not user.control_num:
+            prefix = f"{province_code}-{city_code}-"
+
+            # Lock rows with same prefix and get max control number
+            max_control_num = db.session.query(func.max(User.control_num)).filter(
+                User.control_num.like(f"{prefix}%")
+            ).scalar()
+
+            if max_control_num:
+                try:
+                    last_number = int(max_control_num.split("-")[-1])
+                except ValueError:
+                    last_number = 0
+            else:
+                last_number = 0
+
+            next_number = last_number + 1
+            control_num_candidate = f"{prefix}{next_number:05d}"
+
+            # Extra safety: make sure the generated number doesn't exist
+            while db.session.query(User).filter_by(control_num=control_num_candidate).first():
+                next_number += 1
+                control_num_candidate = f"{prefix}{next_number:05d}"
+
+            user.control_num = control_num_candidate
+
+            # Set visibility flags
+            user.visible_to_brgy = (center_source == "brgy")
+            user.visible_to_rhu = (center_source == "rhu")
+            user.visible_to_hospital = (center_source == "hospital")
+
+            db.session.commit()
+            print("✅ Generated Control Number:", user.control_num)
+            notify_admin_new_submission(user_id)
+        else:
+            print("ℹ️ Control number already exists:", user.control_num)
+
+        return jsonify({"success": True, "control_num": user.control_num}), 200
+
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Integrity error: possible duplication"}), 500
     except Exception as e:
-        print(f"❌ Error updating control number: {e}")  # Debugging
+        db.session.rollback()
+        print("❌ Error updating control number:", e)
         return jsonify({"success": False, "error": str(e)}), 500
-    
     
 @app.route('/get_control_number', methods=['GET'])
 def get_control_number():
-    user_id = request.args.get("user_id")  # Get user_id from request
+    user_id = request.args.get("user_id")
 
     if not user_id:
         return jsonify({"success": False, "error": "Missing user_id"}), 400
 
     try:
-        connection = mysql.connector.connect(
-            host=app.config["MYSQL_HOST"],
-            user=app.config["MYSQL_USER"],
-            password=app.config["MYSQL_PASSWORD"],
-            database=app.config["MYSQL_DB"]
-        )
-        cursor = connection.cursor()
+        user = db.session.query(User).filter_by(id=user_id).first()
+        if not user:
+            return jsonify({"success": False, "error": "User not found"}), 404
 
-        # ✅ Retrieve control number for the given user
-        cursor.execute("SELECT control_num FROM user WHERE id = %s", (user_id,))
-        result = cursor.fetchone()
-       
-        cursor.close()
-        connection.close()
+        # Define center-to-code mapping
+        center_codes = {
+            "BHS Union AFHF": ("0837", "01"),
+            "RHU Mayorga": ("0837", "02"),
+            "Gandara AFHF": ("0860", "02"),
+            "RHU Gandara": ("0860", "03"),
+            "RHU Pagsanghan": ("0860", "04"),
+            "Abuyog DH AFHF": ("0837", "04"),
+            "Gandara DH AFHF": ("0860", "05")
+        }
 
-        if result and result[0]:  # Ensure result is not None
-            return jsonify({"success": True, "control_num": result[0]})
+        center_name = user.location
+        center_info = center_codes.get(center_name)
+
+        if not center_info:
+            return jsonify({"success": False, "error": f"No codes defined for center: {center_name}"}), 400
+
+        province_code, city_code = center_info
+
+        # Generate control number if not set
+        if not user.control_num:
+            prefix = f"{province_code}-{city_code}-"
+            existing_controls = db.session.query(User.control_num).filter(
+                User.control_num.like(f"{prefix}%")
+            ).all()
+
+            existing_numbers = sorted([
+                int(control[0].split("-")[-1])
+                for control in existing_controls if control[0]
+            ])
+
+            count_number = 1
+            for num in existing_numbers:
+                if num == count_number:
+                    count_number += 1
+                else:
+                    break
+
+            control_number = f"{prefix}{count_number:05d}"
+            user.control_num = control_number
+            db.session.commit()
+
+            print("✅ Generated control number:", control_number)
         else:
-            return jsonify({"success": False, "error": "No control number found"}), 404
+            control_number = user.control_num
+
+        return jsonify({"success": True, "control_num": control_number}), 200
 
     except Exception as e:
+        print("❌ Error in get_control_number:", e)
         return jsonify({"success": False, "error": str(e)}), 500
 
 import random
@@ -534,26 +718,78 @@ def summary():
         return redirect(url_for('assessment'))
 
     responses = session.get('responses', {})
+    user = db.session.query(User).filter_by(id=user_id).first()
 
-    # Fetch all questions and match them with responses
     questions = db.session.query(Questions).filter(Questions.id.in_(responses.keys())).all()
-    questions_with_answers = {q.id: {"question": q.question_text, "answer": responses.get(str(q.id))} for q in questions}
+    questions_with_answers = {
+        q.id: {"question": q.question_text, "answer": responses.get(str(q.id))} for q in questions
+    }
 
     if request.method == 'POST':
-        # Generate a unique control number
-        control_number = f"CN-{user_id}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{random.randint(1000, 9999)}"
+        if not user:
+            return "Error: User not found", 404
 
-        # Assign the control number to the user
-        user = db.session.query(User).filter_by(id=user_id).first()
-        if user:
-            user.control_num = control_number
-            db.session.commit()
+        # Define center-to-code and source mappings
+        center_codes = {
+            "BHS Union AFHF": ("0837", "01"),
+            "RHU Mayorga": ("0837", "02"),
+            "Gandara AFHF": ("0860", "02"),
+            "RHU Gandara": ("0860", "03"),
+            "RHU Pagsanghan": ("0860", "04"),
+            "Abuyog DH AFHF": ("0837", "04"),
+            "Gandara DH AFHF": ("0860", "05")
+        }
 
+        center_source_map = {
+            "BHS Union AFHF": "brgy",
+            "RHU Mayorga": "rhu",
+            "Gandara AFHF": "hospital",
+            "RHU Gandara": "rhu",
+            "RHU Pagsanghan": "rhu",
+            "Abuyog DH AFHF": "hospital",
+            "Gandara DH AFHF": "hospital"
+        }
+
+        center_name = user.location
+        center_info = center_codes.get(center_name)
+        center_source = center_source_map.get(center_name)
+
+        if not center_info or not center_source:
+            return f"Error: No codes or source mapping defined for center: {center_name}", 400
+
+        province_code, city_code = center_info
+
+        # Generate control number if not set
+        if not user.control_num:
+            prefix = f"{province_code}-{city_code}-"
+
+            from sqlalchemy import func
+            max_control_num = db.session.query(func.max(User.control_num)).filter(
+                User.control_num.like(f"{prefix}%")
+            ).scalar()
+
+            if max_control_num:
+                last_number = int(max_control_num.split("-")[-1])
+                next_number = last_number + 1
+            else:
+                next_number = 1
+
+            user.control_num = f"{prefix}{next_number:05d}"
+
+        # Set visibility based on center type
+        user.visible_to_rhu = (center_source == "rhu")
+        user.visible_to_brgy = (center_source == "brgy")
+        user.visible_to_hospital = (center_source == "hospital")
+
+        db.session.commit()
+        print("✅ Control number and visibility saved.")
         notify_admin_new_submission(user_id)
 
-        return redirect(url_for('evaluate'))  # Redirect to evaluation page
+        return redirect(url_for('evaluate'))
 
-    return render_template('summary.html', questions_with_answers=questions_with_answers)
+    return render_template('summary.html', questions_with_answers=questions_with_answers, control_number=user.control_num)
+
+
 
 
 @app.route('/admin/questions', methods=['GET', 'POST'])
@@ -599,6 +835,103 @@ def evaluate():
     else:
         return render_template('evaluate2.html', control_number=control_number)
 
+@app.route('/get_results', methods=['GET'])
+def get_results():
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({"error": "Missing user_id"}), 400
+
+    # Fetch "Yes" responses for the user
+    responses = db.session.query(UserResponse).filter_by(user_id=user_id).all()
+    yes_responses = [r for r in responses if r.response == "Yes"]
+
+    if not yes_responses:
+        return jsonify({"results": []})
+
+    # Get the question numbers from those responses
+    question_ids = [r.question_number for r in yes_responses]
+
+    # Fetch corresponding question texts
+    questions = db.session.query(Questions).filter(Questions.id.in_(question_ids)).all()
+    question_map = {q.id: q.question_text for q in questions}
+
+    # Build result
+    result = [
+        {
+            "question": question_map.get(r.question_number, f"Question #{r.question_number}"),
+            "answer": r.response
+        }
+        for r in yes_responses if r.question_number in question_map
+    ]
+
+    return jsonify({"results": result})
+
+
+@app.route('/save_services_and_recommendations', methods=['POST'])
+def save_services_and_recommendations():
+    data = request.get_json()
+    print("Received data:", data)
+
+    user_id = data.get('user_id')
+    services = data.get('services', [])
+    recommendations = data.get('recommendations', [])
+
+    if not user_id:
+        return jsonify({"error": "user_id is missing"}), 400
+
+    try:
+        user = db.session.query(User).filter_by(id=user_id).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Determine source based on user location
+        center_source_map = {
+            "BHS Union AFHF": "brgy",
+            "RHU Mayorga": "rhu",
+            "Gandara AFHF": "hospital",
+            "RHU Gandara": "rhu",
+            "RHU Pagsanghan": "rhu",
+            "Abuyog DH AFHF": "hospital",
+            "Gandara DH AFHF": "hospital"
+        }
+
+        source = center_source_map.get(user.location, "brgy")  # Default to 'brgy'
+
+        for key in center_source_map:
+            if key in user.location:
+                source = center_source_map[key]
+                break
+
+        # Save services
+        for service in services:
+            new_service = Services(
+                service_name=service,
+                user_id=user_id,
+                services_saved=True,
+                source=source
+            )
+            db.session.add(new_service)
+
+        # Save recommendations
+        for rec in recommendations:
+            new_recommendation = Recommendations(
+                recommendation_text=rec,
+                user_id=user_id,
+                recommendation_saved=True,
+                source=source
+            )
+            db.session.add(new_recommendation)
+
+        db.session.commit()
+        return jsonify({"message": "Data saved successfully"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print("Error saving data:", e)
+        return jsonify({"error": str(e)}), 500
+
+
+
 
     
 @app.route('/evaluatee')
@@ -616,7 +949,6 @@ def evaluate2():
 # Thank You Page
 @app.route('/thank-you')
 def thank_you():
-
     return render_template('thankyou.html')
 
 # Run App
