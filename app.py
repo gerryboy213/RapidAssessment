@@ -26,7 +26,7 @@ app.config['MYSQL_DB'] = 'heeadsss_db'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'  # Add this to fetch results as dictionaries
 
 # Database Configuration (Update your MySQL credentials)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/mayorga_form_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/form_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -519,29 +519,29 @@ def update_control_number():
 
         # Center mappings
         center_codes = {
-            "Gandara AFHF/RHU": ("0860", "01"),
-            "Pagsanghan AFHF/RHU": ("0860", "02"),
-            "Matuguinao AFHF/RHU": ("0860", "03"),
-            "Gandara District Hospital": ("0860", "04"),
-            "BHS Union AFHF": ("0837", "05"),
-            "Mayorga AFHF/RHU": ("0837", "06"),
-            "MacArthur AFHF/RHU": ("0837", "07"),
-            "Javier AFHF/RHU": ("0837", "08"),
-            "Abuyog AFHF/RHU": ("0837", "09"),
-            "Abuyog District Hospital": ("0837", "10")
+            "BHS Union AFHF": ("0837", "01"),
+            "RHU Mayorga": ("0837", "02"),
+            "RHU Gandara": ("0860", "03"),
+            "RHU Pagsanghan": ("0860", "04"),
+            "Gandara DH AFHF": ("0860", "05"),
+            "Gandara AFHF": ("0860", "06"),
+            "Abuyog DH AFHF": ("0837", "07"),
+            "RHU Matuguinao": ("0860", "08"),
+            "RHU Javier": ("0837", "09"),
+            "RHU Abuyog": ("0837", "10")
         }
 
         center_source_map = {
-            "Gandara AFHF/RHU": "rhu",
-            "Pagsanghan AFHF/RHU": "rhu",
-            "Matuguinao AFHF/RHU": "rhu",
-            "Gandara District Hospital": "hospital",
             "BHS Union AFHF": "brgy",
-            "Mayorga AFHF/RHU": "rhu",
-            "MacArthur AFHF/RHU": "rhu",
-            "Javier AFHF/RHU": "rhu",
-            "Abuyog AFHF/RHU": "rhu",
-            "Abuyog District Hospital": "hospital"
+            "RHU Mayorga": "rhu",
+            "Gandara AFHF": "hospital",
+            "RHU Gandara": "rhu",
+            "RHU Pagsanghan": "rhu",
+            "Abuyog DH AFHF": "hospital",
+            "Gandara DH AFHF": "hospital",
+            "RHU Matuguinao": "rhu",
+            "RHU Javier": "rhu",
+            "RHU Abuyog": "rhu"
         }
 
         center_name = user.location
@@ -615,16 +615,16 @@ def get_control_number():
 
         # Define center-to-code mapping
         center_codes = {
-            "Gandara AFHF/RHU": ("0860", "01"),
-            "Pagsanghan AFHF/RHU": ("0860", "02"),
-            "Matuguinao AFHF/RHU": ("0860", "03"),
-            "Gandara District Hospital": ("0860", "04"),
-            "BHS Union AFHF": ("0837", "05"),
-            "Mayorga AFHF/RHU": ("0837", "06"),
-            "MacArthur AFHF/RHU": ("0837", "07"),
-            "Javier AFHF/RHU": ("0837", "08"),
-            "Abuyog AFHF/RHU": ("0837", "09"),
-            "Abuyog District Hospital": ("0837", "10")
+            "BHS Union AFHF": ("0837", "01"),
+            "RHU Mayorga": ("0837", "02"),
+            "RHU Gandara": ("0860", "03"),
+            "RHU Pagsanghan": ("0860", "04"),
+            "Gandara DH AFHF": ("0860", "05"),
+            "Gandara AFHF": ("0860", "06"),
+            "Abuyog DH AFHF": ("0837", "07"),
+            "RHU Matuguinao": ("0860", "08"),
+            "RHU Javier": ("0837", "09"),
+            "RHU Abuyog": ("0837", "10")
         }
 
         center_name = user.location
@@ -741,29 +741,29 @@ def summary():
 
         # Define center-to-code and source mappings
         center_codes = {
-            "Gandara AFHF/RHU": ("0860", "01"),
-            "Pagsanghan AFHF/RHU": ("0860", "02"),
-            "Matuguinao AFHF/RHU": ("0860", "03"),
-            "Gandara District Hospital": ("0860", "04"),
-            "BHS Union AFHF": ("0837", "05"),
-            "Mayorga AFHF/RHU": ("0837", "06"),
-            "MacArthur AFHF/RHU": ("0837", "07"),
-            "Javier AFHF/RHU": ("0837", "08"),
-            "Abuyog AFHF/RHU": ("0837", "09"),
-            "Abuyog District Hospital": ("0837", "10")
+            "BHS Union AFHF": ("0837", "01"),
+            "RHU Mayorga": ("0837", "02"),
+            "RHU Gandara": ("0860", "03"),
+            "RHU Pagsanghan": ("0860", "04"),
+            "Gandara DH AFHF": ("0860", "05"),
+            "Gandara AFHF": ("0860", "06"),
+            "Abuyog DH AFHF": ("0837", "07"),
+            "RHU Matuguinao": ("0860", "08"),
+            "RHU Javier": ("0837", "09"),
+            "RHU Abuyog": ("0837", "10")
         }
 
         center_source_map = {
-            "Gandara AFHF/RHU": "rhu",
-            "Pagsanghan AFHF/RHU": "rhu",
-            "Matuguinao AFHF/RHU": "rhu",
-            "Gandara District Hospital": "hospital",
             "BHS Union AFHF": "brgy",
-            "Mayorga AFHF/RHU": "rhu",
-            "MacArthur AFHF/RHU": "rhu",
-            "Javier AFHF/RHU": "rhu",
-            "Abuyog AFHF/RHU": "rhu",
-            "Abuyog District Hospital": "hospital"
+            "RHU Mayorga": "rhu",
+            "Gandara AFHF": "hospital",
+            "RHU Gandara": "rhu",
+            "RHU Pagsanghan": "rhu",
+            "Abuyog DH AFHF": "hospital",
+            "Gandara DH AFHF": "hospital",
+            "RHU Matuguinao": "rhu",
+            "RHU Javier": "rhu",
+            "RHU Abuyog": "rhu"
         }
 
         center_name = user.location
@@ -902,16 +902,16 @@ def save_services_and_recommendations():
 
         # Determine source based on user location
         center_source_map = {
-            "Gandara AFHF/RHU": "rhu",
-            "Pagsanghan AFHF/RHU": "rhu",
-            "Matuguinao AFHF/RHU": "rhu",
-            "Gandara District Hospital": "hospital",
             "BHS Union AFHF": "brgy",
-            "Mayorga AFHF/RHU": "rhu",
-            "MacArthur AFHF/RHU": "rhu",
-            "Javier AFHF/RHU": "rhu",
-            "Abuyog AFHF/RHU": "rhu",
-            "Abuyog District Hospital": "hospital"
+            "RHU Mayorga": "rhu",
+            "Gandara AFHF": "hospital",
+            "RHU Gandara": "rhu",
+            "RHU Pagsanghan": "rhu",
+            "Abuyog DH AFHF": "hospital",
+            "Gandara DH AFHF": "hospital",
+            "RHU Matuguinao": "rhu",
+            "RHU Javier": "rhu",
+            "RHU Abuyog": "rhu"
         }
 
         source = center_source_map.get(user.location, "brgy")  # Default to 'brgy'
