@@ -528,7 +528,8 @@ def update_control_number():
             "Abuyog DH AFHF": ("0837", "07"),
             "RHU Matuguinao": ("0860", "08"),
             "RHU Javier": ("0837", "09"),
-            "RHU Abuyog": ("0837", "10")
+            "RHU Abuyog": ("0837", "10"),
+            "RHU San Jorge": ("0860", "11")
         }
 
         center_source_map = {
@@ -541,7 +542,8 @@ def update_control_number():
             "Gandara DH AFHF": "hospital",
             "RHU Matuguinao": "rhu",
             "RHU Javier": "rhu",
-            "RHU Abuyog": "rhu"
+            "RHU Abuyog": "rhu",
+            "RHU San Jorge": "rhu"
         }
 
         center_name = user.location
@@ -624,7 +626,8 @@ def get_control_number():
             "Abuyog DH AFHF": ("0837", "07"),
             "RHU Matuguinao": ("0860", "08"),
             "RHU Javier": ("0837", "09"),
-            "RHU Abuyog": ("0837", "10")
+            "RHU Abuyog": ("0837", "10"),
+            "RHU San Jorge": ("0860", "11")
         }
 
         center_name = user.location
@@ -750,7 +753,8 @@ def summary():
             "Abuyog DH AFHF": ("0837", "07"),
             "RHU Matuguinao": ("0860", "08"),
             "RHU Javier": ("0837", "09"),
-            "RHU Abuyog": ("0837", "10")
+            "RHU Abuyog": ("0837", "10"),
+            "RHU San Jorge": ("0860", "11")
         }
 
         center_source_map = {
@@ -763,7 +767,8 @@ def summary():
             "Abuyog DH AFHF": "hospital",
             "RHU Matuguinao": "rhu",
             "RHU Javier": "rhu",
-            "RHU Abuyog": "rhu"
+            "RHU Abuyog": "rhu",
+            "RHU San Jorge": "rhu"
         }
 
         center_name = user.location
@@ -911,7 +916,8 @@ def save_services_and_recommendations():
             "Gandara DH AFHF": "hospital",
             "RHU Matuguinao": "rhu",
             "RHU Javier": "rhu",
-            "RHU Abuyog": "rhu"
+            "RHU Abuyog": "rhu",
+            "RHU San Jorge": "rhu"
         }
 
         source = center_source_map.get(user.location, "brgy")  # Default to 'brgy'
